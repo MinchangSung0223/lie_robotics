@@ -1,6 +1,5 @@
-# modern robotics fast python version unsing pybind11
+# lie_robotics fast python version unsing pybind11
 ```bash
-    cd /path/to/modern_robotics/
+    cd /path/to/lie_robotics/
     pip install .
 ```
-# lie_robotics
