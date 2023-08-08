@@ -5,7 +5,7 @@ import time
 from math import *
 import json
 import math
-import modern_robotics as mr
+import lie_robotics as mr
 import matplotlib.pyplot as plt
 
 from Indy7  import *
@@ -61,13 +61,13 @@ def read_json_file(file_path):
         data = json.load(file)
     return data
     
-json_file_path = 'MR_info.json'
+json_file_path = 'LR_info.json'
 data_from_json = read_json_file(json_file_path)
 
 
 M=data_from_json['M']
-Slist = np.array(data_from_json['baseSlist'])
-Blist = np.array(data_from_json['baseBlist'])
+Slist = np.array(data_from_json['Slist'])
+Blist = np.array(data_from_json['Blist'])
 Mlist_ = np.array(data_from_json['Mlist'])
 Mlist = np.zeros([4,4,7]);
 Glist = np.zeros([6,6,6]);
@@ -170,9 +170,9 @@ while(t<endTime):
 	q,qdot = indy7.getJointStates();
 	qddot = (qdot-prev_qdot)/dt
 	T = FKinSpace(M,Slist,q);
-	Js,Jb,Ja,pinvJs,pinvJb, pinvJa = indy7.getJacobian(M,Slist,Blist,q);
+	Js,Jb = indy7.getJacobian(M,Slist,Blist,q);
 	Jb = mr.JacobianBody(Blist,q)
-	dJb = dJacobianBody(Jb ,qdot)
+	dJb = dJacobianBody(M,Blist,q,qdot)
 
 
 	Kp=np.diag([2000,2000,2000,2000,2000,2000])
@@ -186,46 +186,21 @@ while(t<endTime):
 	dV = dJb@qdot + Jb@qddot_ref;
 	#dV = dVd;
 	dVe = dVd-Adjoint(invXe)@dV + ad(Ve)@Vd
-	lambda_ = flip(se3ToVec(MatrixLog6(Xe)))
-	dlambda = dlog6(-lambda_)@flip(Ve)
+	lambda_ = (se3ToVec(MatrixLog6(Xe)))
+	dlambda = dlog6(-lambda_)@(Ve)
 	ddlambda_ref = -Kv@dlambda -Kp@lambda_
-	#mouse Event
-	mouseEvents = p.getMouseEvents()
-	for e in mouseEvents:
-		clicked_index = clicked_index+1
-		if ((e[0] == 2) and (e[3] == 0) and (e[4] & p.KEY_WAS_TRIGGERED)):
-			i=0
-			XT= T@mr.MatrixExp6(mr.VecTose3(np.array([(np.random.rand(1)-0.5)*0.2,(np.random.rand(1)-0.5)*0.2,(np.random.rand(1)-0.5)*0.2,(np.random.rand(1)-0.5)*0.2,(np.random.rand(1)-0.5)*0.2,(np.random.rand(1)-0.5)*0.2])))
-			
-			Xd_list,Vd_list,dVd_list=mr.LieScrewTrajectory(T,XT,(Vd),VT,(dVd),dVT,2,2000);
-			data_dict = {
-				"X0": T.tolist(),
-				"XT": XT.tolist(),
-				"V0": Vd.tolist(),
-				"VT": VT.tolist(),
-				"dV0": dVd.tolist(),
-				"dVT": VT.tolist()
-			}
-
-			file_path = "numpy_arrays"+str(clicked_index)+".json"
-			with open(file_path, 'w') as json_file:
-				json.dump(data_dict, json_file)
-			#print("V0 : ",V)
-			#print("dV0 : ",dV)
-			#print("V0_ : ",(Vd_list[0]))
-			#print("dV0_ : ",(dVd_list[0]))
-			print("Clicked")
+	
 	if(i>=len(Xd_list)):
 		Xd = Xd_list[-1]
-		Vd = flip(Vd_list[-1])
-		dVd = flip(dVd_list[-1])
+		Vd = (Vd_list[-1])
+		dVd =(dVd_list[-1])
 	else:
 		Xd = Xd_list[i]
-		Vd = flip(Vd_list[i])
-		dVd = flip(dVd_list[i])
-	dV_ref = Adjoint(Xe)@(dVd - flip(dexp6(-lambda_)@ddlambda_ref) + ad(Ve)@Vd - flip(ddexp6(-lambda_,-dlambda)@dlambda))
+		Vd = (Vd_list[i])
+		dVd = (dVd_list[i])
+	dV_ref = Adjoint(Xe)@(dVd - (dexp6(-lambda_)@ddlambda_ref) + ad(Ve)@Vd - (ddexp6(-lambda_,-dlambda)@dlambda))
 	qddot_ref = Jb.T@np.linalg.inv(Jb@Jb.T+np.eye(6)*0.001)@(dV_ref-dJb@qdot)
-	tau =mr.InverseDynamics(q, qdot, qddot_ref, g, Ftip, Mlist,  Glist, Slist,0);	
+	tau =mr.InverseDynamics(q, qdot, qddot_ref, g, Ftip, Mlist,  Glist, Slist);	
 
 	#print
 	print_cnt =print_cnt+1

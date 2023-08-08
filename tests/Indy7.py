@@ -3,7 +3,7 @@ import numpy as np
 np.set_printoptions(precision=4, suppress=True)
 from numpy.linalg import pinv
 import matplotlib.pyplot as plt
-from modern_robotics import *
+from lie_robotics import *
 import matplotlib.pyplot as plt
 from math import *
 import json
@@ -142,8 +142,8 @@ class Indy7:
         thetalist = np.reshape(thetalist,(len(thetalist),1))
         Js = JacobianSpace(Slist,thetalist);
         Jb = JacobianBody(Blist,thetalist);
-        Ja = AnalyticJacobianBody(M,Blist, thetalist)
-        return Js,Jb,Ja,pinv(Js),pinv(Jb) , pinv(Ja) 
+    
+        return Js,Jb
     def getEEFPose(self):
         Teef = np.eye(4);
         ret = p.getLinkState(self.robotId,self.eef_num,1,1)

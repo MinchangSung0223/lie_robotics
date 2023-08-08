@@ -43,6 +43,7 @@ namespace lr {
     se3 MatrixLog6(const SE3& T);
     SE3 FKinSpace(const SE3& M, const ScrewList& Slist, const JVec& thetaList);
     SE3 FKinBody(const SE3& M, const ScrewList& Blist, const JVec& thetaList);
+    Jacobian dJacobianBody(const SE3& M,const ScrewList& Blist, const JVec& q ,const JVec& dq);
     Jacobian JacobianSpace(const ScrewList& Slist, const JVec& thetaList);
     Jacobian JacobianBody(const ScrewList& Blist, const JVec& thetaList) ;
     SE3 RpToTrans(const Matrix3d& R, const Vector3d& p);
@@ -53,14 +54,29 @@ namespace lr {
     JVec InverseDynamics(const JVec& thetalist, const JVec& dthetalist, const JVec& ddthetalist,
                   const Vector3d& g, const Vector6d& Ftip, const std::vector<SE3>& Mlist,
                   const std::vector<Matrix6d>& Glist, const ScrewList& Slist);
+   JVec InverseDynamics(const JVec& thetalist, const JVec& dthetalist, const JVec& ddthetalist,
+                  const Vector3d& g, const Vector6d& Ftip, const std::vector<SE3>& Mlist,
+                  const std::vector<Matrix6d>& Glist, const ScrewList& Slist,double eef_mass);                  
     JVec GravityForces(const JVec& thetalist, const Vector3d& g,
                   const std::vector<SE3>& Mlist, const std::vector<Matrix6d>& Glist, const ScrewList& Slist) ;                                    
-    MassMat MassMatrix(const JVec& thetalist, const std::vector<SE3>& Mlist, const std::vector<Matrix6d>& Glist, const ScrewList& Slist) ;                                    
+    JVec GravityForces(const JVec& thetalist, const Vector3d& g,
+                  const std::vector<SE3>& Mlist, const std::vector<Matrix6d>& Glist, const ScrewList& Slist,double eef_mass) ;                    
+    MassMat MassMatrix(const JVec& thetalist, const std::vector<SE3>& Mlist, const std::vector<Matrix6d>& Glist, const ScrewList& Slist) ;
+    MassMat MassMatrix(const JVec& thetalist, const std::vector<SE3>& Mlist, const std::vector<Matrix6d>& Glist, const ScrewList& Slist,double eef_mass) ;                          
+                                        
     JVec VelQuadraticForces(const JVec& thetalist, const JVec& dthetalist,const std::vector<SE3>& Mlist, const std::vector<Matrix6d>& Glist, const ScrewList& Slist) ;
+    JVec VelQuadraticForces(const JVec& thetalist, const JVec& dthetalist,const std::vector<SE3>& Mlist, const std::vector<Matrix6d>& Glist, const ScrewList& Slist,double eef_mass) ;
+    
     JVec EndEffectorForces(const JVec& thetalist, const Vector6d& Ftip,const std::vector<SE3>& Mlist, const std::vector<Matrix6d>& Glist, const ScrewList& Slist);
+    JVec EndEffectorForces(const JVec& thetalist, const Vector6d& Ftip,const std::vector<SE3>& Mlist, const std::vector<Matrix6d>& Glist, const ScrewList& Slist,double eef_mass);
+    
     JVec ForwardDynamics(const JVec& thetalist, const JVec& dthetalist, const JVec& taulist,
                   const Vector3d& g, const Vector6d& Ftip, const std::vector<SE3>& Mlist,
-                  const std::vector<Matrix6d>& Glist, const ScrewList& Slist);                      
+                  const std::vector<Matrix6d>& Glist, const ScrewList& Slist);       
+               	JVec ForwardDynamics(const JVec& thetalist, const JVec& dthetalist, const JVec& taulist,
+									const Vector3d& g, const Vector6d& Ftip, const std::vector<SE3>& Mlist,
+									const std::vector<Matrix6d>& Glist, const ScrewList& Slist,double eef_mass);                    
+
     void EulerStep(JVec& thetalist, JVec& dthetalist, const JVec& ddthetalist, double dt);                                    
     Vector3d QuinticTimeScalingKinematics(double s0,double sT,double ds0,double dsT,double dds0,double ddsT,double Tf, double t) ;
     void FKinBody(const SE3& M,const ScrewList& Blist, const JVec& q ,const JVec& dq, SE3 &T, Jacobian &Jb,Jacobian& dJb);

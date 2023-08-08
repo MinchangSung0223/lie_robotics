@@ -96,10 +96,15 @@ PYBIND11_MODULE(lie_robotics, m) {
 		JVec& thetalist, double eomg, double ev) {
         return IKinSpace(Slist,M,T,thetalist,eomg,ev);
     });   
-   m.def("InverseDynamics", [](const JVec& thetalist, const JVec& dthetalist, const JVec& ddthetalist,
+    m.def("InverseDynamics", [](const JVec& thetalist, const JVec& dthetalist, const JVec& ddthetalist,
 									const Vector3d& g, const Vector6d& Ftip, const std::vector<SE3>& Mlist,
 									const std::vector<Matrix6d>& Glist, const ScrewList& Slist) {
         return InverseDynamics(thetalist,dthetalist,ddthetalist,g,Ftip,Mlist,Glist,Slist);
+    });   
+   m.def("InverseDynamics", [](const JVec& thetalist, const JVec& dthetalist, const JVec& ddthetalist,
+									const Vector3d& g, const Vector6d& Ftip, const std::vector<SE3>& Mlist,
+									const std::vector<Matrix6d>& Glist, const ScrewList& Slist,double eef_mass) {
+        return InverseDynamics(thetalist,dthetalist,ddthetalist,g,Ftip,Mlist,Glist,Slist,eef_mass);
     });   
 
    m.def("GravityForces", [](const JVec& thetalist, const Vector3d& g,
@@ -107,24 +112,40 @@ PYBIND11_MODULE(lie_robotics, m) {
         return GravityForces(thetalist,g,Mlist,Glist,Slist);
     });  
 
+   m.def("GravityForces", [](const JVec& thetalist, const Vector3d& g,
+									const std::vector<SE3>& Mlist, const std::vector<Matrix6d>& Glist, const ScrewList& Slist,double eef_mass) {
+        return GravityForces(thetalist,g,Mlist,Glist,Slist,eef_mass);
+    });  
 
    m.def("MassMatrix", [](const JVec& thetalist, const std::vector<SE3>& Mlist, const std::vector<Matrix6d>& Glist, const ScrewList& Slist) {
         return MassMatrix(thetalist,Mlist,Glist,Slist);
+    });  
+   m.def("MassMatrix", [](const JVec& thetalist, const std::vector<SE3>& Mlist, const std::vector<Matrix6d>& Glist, const ScrewList& Slist,double eef_mass) {
+        return MassMatrix(thetalist,Mlist,Glist,Slist,eef_mass);
     });  
 
    m.def("VelQuadraticForces", [](const JVec& thetalist, const JVec& dthetalist,const std::vector<SE3>& Mlist, const std::vector<Matrix6d>& Glist, const ScrewList& Slist) {
         return VelQuadraticForces(thetalist,dthetalist,Mlist,Glist,Slist);
     });  
-
+    m.def("VelQuadraticForces", [](const JVec& thetalist, const JVec& dthetalist,const std::vector<SE3>& Mlist, const std::vector<Matrix6d>& Glist, const ScrewList& Slist,double eef_mass) {
+        return VelQuadraticForces(thetalist,dthetalist,Mlist,Glist,Slist,eef_mass);
+    });  
     m.def("EndEffectorForces", [](const JVec& thetalist, const Vector6d& Ftip,const std::vector<SE3>& Mlist, const std::vector<Matrix6d>& Glist, const ScrewList& Slist) {
         return EndEffectorForces(thetalist,Ftip,Mlist,Glist,Slist);
     });  
-
+    m.def("EndEffectorForces", [](const JVec& thetalist, const Vector6d& Ftip,const std::vector<SE3>& Mlist, const std::vector<Matrix6d>& Glist, const ScrewList& Slist,double eef_mass) {
+        return EndEffectorForces(thetalist,Ftip,Mlist,Glist,Slist,eef_mass);
+    });  
     m.def("ForwardDynamics", [](const JVec& thetalist, const JVec& dthetalist, const JVec& taulist,
 									const Vector3d& g, const Vector6d& Ftip, const std::vector<SE3>& Mlist,
 									const std::vector<Matrix6d>& Glist, const ScrewList& Slist) {
         return ForwardDynamics(thetalist,dthetalist,taulist,g, Ftip,Mlist,Glist,Slist );
     });  
+    m.def("ForwardDynamics", [](const JVec& thetalist, const JVec& dthetalist, const JVec& taulist,
+									const Vector3d& g, const Vector6d& Ftip, const std::vector<SE3>& Mlist,
+									const std::vector<Matrix6d>& Glist, const ScrewList& Slist,double eef_mass) {
+        return ForwardDynamics(thetalist,dthetalist,taulist,g, Ftip,Mlist,Glist,Slist ,eef_mass);
+    }); 
 
     m.def("EulerStep", [](JVec& thetalist, JVec& dthetalist, const JVec& ddthetalist, double dt) {
         return EulerStep(thetalist,dthetalist,ddthetalist,dt);
@@ -141,7 +162,9 @@ PYBIND11_MODULE(lie_robotics, m) {
 m.def("FKinBody", [](SE3 M,ScrewList Blist, const JVec& q ,const JVec& dq, SE3 &T, Jacobian &Jb,Jacobian& dJb) {
         return lr::FKinBody(M,Blist,q,dq,T,Jb,dJb);
     });
-
+m.def("dJacobianBody", [](SE3 M,ScrewList Blist, const JVec& q ,const JVec& dq) {
+        return lr::dJacobianBody(M,Blist,q,dq);
+    });
 m.def("dexp3", [](const Vector3d& xi) {
         return lr::dexp3(xi);
     });

@@ -1,10 +1,10 @@
 # ninja log v5
-0	3745	1690857369693939959	CMakeFiles/lie_robotics.dir/src/main.cpp.o	4269c5c3651038b3
 1	3264	1690857164753947107	CMakeFiles/modern_robotics.dir/src/main.cpp.o	9a494cd64cb6756c
+1	3657	1691499289345952239	CMakeFiles/lie_robotics.dir/src/main.cpp.o	4269c5c3651038b3
 1	22666	1690856732643950862	CMakeFiles/modern_robotics.dir/src/lie_robotics.cpp.o	ae48504d8bf39130
-0	17509	1690857383453942973	CMakeFiles/lie_robotics.dir/src/lie_robotics.cpp.o	7fc724b28c88d16d
-17509	25514	1690857391463946344	../../lib.linux-x86_64-3.10/lie_robotics.cpython-310-x86_64-linux-gnu.so	c5f8f4c6d6ebf896
+1	19189	1691499304875952528	CMakeFiles/lie_robotics.dir/src/lie_robotics.cpp.o	7fc724b28c88d16d
 3264	11231	1690857172723947052	../../lib.linux-x86_64-3.10/modern_robotics.cpython-310-x86_64-linux-gnu.so	3bbe0043e6d66493
-1	3320	1690862338363951593	CMakeFiles/lie_robotics.dir/src/main.cpp.o	4269c5c3651038b3
-1	17502	1690862352543953601	CMakeFiles/lie_robotics.dir/src/lie_robotics.cpp.o	7fc724b28c88d16d
-17502	25521	1690862360563954741	../../lib.linux-x86_64-3.10/lie_robotics.cpython-310-x86_64-linux-gnu.so	c5f8f4c6d6ebf896
+19189	27474	1691499313165952701	../../lib.linux-x86_64-3.10/lie_robotics.cpython-310-x86_64-linux-gnu.so	c5f8f4c6d6ebf896
+1	4036	1691499483375934828	CMakeFiles/lie_robotics.dir/src/main.cpp.o	4269c5c3651038b3
+1	20741	1691499500085960443	CMakeFiles/lie_robotics.dir/src/lie_robotics.cpp.o	7fc724b28c88d16d
+20741	29089	1691499508435957874	../../lib.linux-x86_64-3.10/lie_robotics.cpython-310-x86_64-linux-gnu.so	c5f8f4c6d6ebf896

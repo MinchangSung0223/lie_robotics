@@ -336,6 +336,60 @@ namespace lr {
 		}
 		return taulist;
 	}
+	
+	JVec InverseDynamics(const JVec& thetalist, const JVec& dthetalist, const JVec& ddthetalist,
+									const Vector3d& g, const Vector6d& Ftip, const vector<SE3>& Mlist,
+									const vector<Matrix6d>& Glist, const ScrewList& Slist,double eef_mass) {
+	    // the size of the lists
+		int n = JOINTNUM;
+
+		SE3 Mi = SE3::Identity();
+		Matrix6xn Ai = Matrix6xn::Zero();
+		vector<ScrewList> AdTi;
+		for (int i = 0; i < n+1; i++) {
+			AdTi.push_back(Matrix6d::Zero());
+		}
+		Matrix6xn_1 Vi = Matrix6xn_1::Zero();    // velocity
+		Matrix6xn_1 Vdi = Matrix6xn_1::Zero();   // acceleration
+
+		//Vdi.block(3, 0, 3, 1) = - g;
+		Vdi.block(0, 0, 3, 1) = - g;
+		AdTi[n] = Ad(TransInv(Mlist[n]));
+		Vector6d Fi = Ftip;
+
+		JVec taulist = JVec::Zero();
+		Matrix6d Geef = Matrix6d::Identity()*eef_mass;
+		Geef.block<3,3>(3,3) = Matrix3d::Zero();
+		SE3 Meef = SE3::Identity();
+		// forward pass
+		for (int i = 0; i < n; i++) {
+			Mi = Mi * Mlist[i];
+			Ai.col(i) = Ad(TransInv(Mi))*Slist.col(i);
+			
+
+			AdTi[i] = Ad(MatrixExp6(VecTose3(Ai.col(i)*-thetalist(i)))
+			          * TransInv(Mlist[i]));
+			Vi.col(i+1) = AdTi[i] * Vi.col(i) + Ai.col(i) * dthetalist(i);
+			
+			Vdi.col(i+1) = AdTi[i] * Vdi.col(i) + Ai.col(i) * ddthetalist(i)
+						   + ad(Vi.col(i+1)) * Ai.col(i) * dthetalist(i); // this index is different from book!
+		}
+		Vector6d Aeef = Ad(TransInv(Meef))*Slist.col(n-1);
+		Matrix6d AdTeef = Ad( MatrixExp6(VecTose3(Aeef*0))*TransInv(Meef));
+		Vector6d Veef= AdTeef* Vi.col(n) + Ai.col(n-1) * 0;
+		Vector6d Vdeef= AdTeef* Vdi.col(n) + Ai.col(n-1) * 0+ad(Veef)*Ai.col(n-1)*0;
+
+		// backward pass
+		for (int i = n-1; i >= 0; i--) {
+			if(i==n-1){
+				Fi = AdTeef.transpose()*Fi + Geef*Vdeef-ad(Veef).transpose()*Geef*Veef;
+			}
+			Fi = AdTi[i+1].transpose() * Fi + Glist[i] * Vdi.col(i+1)
+			     - ad(Vi.col(i+1)).transpose() * (Glist[i] * Vi.col(i+1));
+			taulist(i) = Fi.transpose() * Ai.col(i);
+		}
+		return taulist;
+	}	
 	JVec GravityForces(const JVec& thetalist, const Vector3d& g,
 									const vector<SE3>& Mlist, const vector<Matrix6d>& Glist, const ScrewList& Slist) {
 	    int n = JOINTNUM;
@@ -346,6 +400,16 @@ namespace lr {
 		return grav;
 	}	
 
+	JVec GravityForces(const JVec& thetalist, const Vector3d& g,
+									const vector<SE3>& Mlist, const vector<Matrix6d>& Glist, const ScrewList& Slist,double eef_mass) {
+	    int n = JOINTNUM;
+		JVec dummylist = JVec::Zero();
+		Vector6d dummyForce = Vector6d::Zero();
+		JVec grav = InverseDynamics(thetalist, dummylist, dummylist, g,
+                                                dummyForce, Mlist, Glist, Slist,eef_mass);
+		return grav;
+	}
+	
 	MassMat MassMatrix(const JVec& thetalist,
                                 const vector<SE3>& Mlist, const vector<Matrix6d>& Glist, const ScrewList& Slist) {
 		int n = JOINTNUM;
@@ -361,7 +425,21 @@ namespace lr {
 		}
 		return M;
 	}
-
+	MassMat MassMatrix(const JVec& thetalist,
+                                const vector<SE3>& Mlist, const vector<Matrix6d>& Glist, const ScrewList& Slist,double eef_mass) {
+		int n = JOINTNUM;
+		JVec dummylist = JVec::Zero();
+		Vector3d dummyg = Vector3d::Zero();
+		Vector6d dummyforce = Vector6d::Zero();
+		MassMat M = MassMat::Zero();
+		for (int i = 0; i < n; i++) {
+			JVec ddthetalist = JVec::Zero();
+			ddthetalist(i) = 1;
+			M.col(i) = InverseDynamics(thetalist, dummylist, ddthetalist,
+                             dummyg, dummyforce, Mlist, Glist, Slist,eef_mass);
+		}
+		return M;
+	}
 	JVec VelQuadraticForces(const JVec& thetalist, const JVec& dthetalist,const vector<SE3>& Mlist, const vector<Matrix6d>& Glist, const ScrewList& Slist) {
 		int n = JOINTNUM;
 		JVec dummylist = JVec::Zero();
@@ -371,12 +449,31 @@ namespace lr {
                              dummyg, dummyforce, Mlist, Glist, Slist);
 		return c;
 	}	
+	
+		JVec VelQuadraticForces(const JVec& thetalist, const JVec& dthetalist,const vector<SE3>& Mlist, const vector<Matrix6d>& Glist, const ScrewList& Slist,double eef_mass) {
+		int n = JOINTNUM;
+		JVec dummylist = JVec::Zero();
+		Vector3d dummyg = Vector3d::Zero();
+		Vector6d dummyforce = Vector6d::Zero(6);
+		JVec c = InverseDynamics(thetalist, dthetalist, dummylist,
+                             dummyg, dummyforce, Mlist, Glist, Slist,eef_mass);
+		return c;
+	}
 	JVec EndEffectorForces(const JVec& thetalist, const Vector6d& Ftip,const vector<SE3>& Mlist, const vector<Matrix6d>& Glist, const ScrewList& Slist) {
 		int n = JOINTNUM;
 		JVec dummylist = JVec::Zero();
 		Vector3d dummyg = Vector3d::Zero();
 		JVec JTFtip = InverseDynamics(thetalist, dummylist, dummylist,
                              dummyg, Ftip, Mlist, Glist, Slist);
+		return JTFtip;
+	}
+	
+		JVec EndEffectorForces(const JVec& thetalist, const Vector6d& Ftip,const vector<SE3>& Mlist, const vector<Matrix6d>& Glist, const ScrewList& Slist,double eef_mass) {
+		int n = JOINTNUM;
+		JVec dummylist = JVec::Zero();
+		Vector3d dummyg = Vector3d::Zero();
+		JVec JTFtip = InverseDynamics(thetalist, dummylist, dummylist,
+                             dummyg, Ftip, Mlist, Glist, Slist,eef_mass);
 		return JTFtip;
 	}
 	JVec ForwardDynamics(const JVec& thetalist, const JVec& dthetalist, const JVec& taulist,
@@ -395,6 +492,22 @@ namespace lr {
 		JVec ddthetalist =  Eigen::Map<JVec>(x.data(), x.size());
 		return ddthetalist;
 	}	
+	JVec ForwardDynamics(const JVec& thetalist, const JVec& dthetalist, const JVec& taulist,
+									const Vector3d& g, const Vector6d& Ftip, const vector<SE3>& Mlist,
+									const vector<Matrix6d>& Glist, const ScrewList& Slist,double eef_mass) {
+
+		JVec totalForce = taulist - VelQuadraticForces(thetalist, dthetalist, Mlist, Glist, Slist,eef_mass)
+                 							 - GravityForces(thetalist, g, Mlist, Glist, Slist,eef_mass)
+                                             - EndEffectorForces(thetalist, Ftip, Mlist, Glist, Slist,eef_mass);
+		MassMat M = MassMatrix(thetalist, Mlist, Glist, Slist,eef_mass);
+		// Use LDLT since M is positive definite
+	    Eigen::LDLT<MassMat> ldlt(M);
+		Eigen::VectorXd v = Eigen::Map<Eigen::VectorXd>(totalForce.data(), totalForce.size());
+		Eigen::VectorXd x = ldlt.solve(v);
+        // JVec ddthetalist = M.ldlt().solve(totalForce);
+		JVec ddthetalist =  Eigen::Map<JVec>(x.data(), x.size());
+		return ddthetalist;
+	}		
 	void EulerStep(JVec& thetalist, JVec& dthetalist, const JVec& ddthetalist, double dt) {
 		thetalist += dthetalist * dt;
 		dthetalist += ddthetalist * dt;
@@ -434,7 +547,25 @@ namespace lr {
 		T_*= MatrixExp6(VecTose3(-1 * Blist.col(0) * q(0)));
 		T = M*TransInv(T_);
 		
-	}		
+	}	
+       Jacobian dJacobianBody(const SE3& M,const ScrewList& Blist, const JVec& q ,const JVec& dq){
+		Jacobian Jb = Blist;
+		Jacobian dJb = Jacobian::Zero();
+		SE3  T = SE3::Identity();
+		SE3 T_ = SE3::Identity();
+		Vector6d prev_dJidt=Blist.col(JOINTNUM-1)*dq(JOINTNUM-1);
+		for(int i = JOINTNUM-2 ;i >= 0;i--){	
+				T_*= MatrixExp6(VecTose3(-1 * Blist.col(i + 1) * q(i + 1)));
+				Vector6d Jbi = Ad(T_)*Blist.col(i);
+				Jb.col(i)=Jbi;
+				dJb.col(i) = ad(Jbi)*prev_dJidt;
+				prev_dJidt += Jbi*dq(i);			   
+		}
+		T_*= MatrixExp6(VecTose3(-1 * Blist.col(0) * q(0)));
+		T = M*TransInv(T_);
+		return dJb;
+		
+	}	
 
 
 	Matrix3d dexp3(const Vector3d& xi) {
