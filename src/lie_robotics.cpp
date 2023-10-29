@@ -300,7 +300,7 @@ namespace lr {
 
 		SE3 Mi = SE3::Identity();
 		Matrix6xn Ai = Matrix6xn::Zero();
-		vector<ScrewList> AdTi;
+		vector<Matrix6d> AdTi;
 		for (int i = 0; i < n+1; i++) {
 			AdTi.push_back(Matrix6d::Zero());
 		}
@@ -345,7 +345,7 @@ namespace lr {
 
 		SE3 Mi = SE3::Identity();
 		Matrix6xn Ai = Matrix6xn::Zero();
-		vector<ScrewList> AdTi;
+		vector<Matrix6d> AdTi;
 		for (int i = 0; i < n+1; i++) {
 			AdTi.push_back(Matrix6d::Zero());
 		}
